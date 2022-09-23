@@ -12,13 +12,14 @@ class BaseCustomException(APIException):
         self.status_code = code
 
 
-class CustomerNotFoundException(BaseCustomException):
-
-    def __init__(self, detail):
-        super().__init__(detail, status.HTTP_404_NOT_FOUND)
-
-
 class InvalidCustomerRequestException(BaseCustomException):
 
     def __init__(self, detail):
         super().__init__(detail, status.HTTP_400_BAD_REQUEST)
+
+
+class NotificationEmailAlreadyExistsException(BaseCustomException):
+
+    def __init__(self):
+        detail = "Notification email has already used with the customer type"
+        super().__init__(detail, status.HTTP_409_CONFLICT)

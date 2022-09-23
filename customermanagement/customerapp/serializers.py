@@ -1,28 +1,27 @@
 from rest_framework import serializers
 from .models import Customer
 import re
-from .api_exceptions import CustomerNotFoundException, InvalidCustomerRequestException
+from .api_exceptions import NotificationEmailAlreadyExistsException, InvalidCustomerRequestException
 
 EMAIL_REGEX = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
 
 
 class CustomerSerializer(serializers.ModelSerializer):
 
-    def validate_notification_email(self, value):
-        if not re.fullmatch(EMAIL_REGEX, value):
-            raise InvalidCustomerRequestException("Notification email is not valid")
-        else:
-            return value
-
-    def validate_id(self, value):
-        if value != None:
-            raise InvalidCustomerRequestException("Customer ID must be null while saving")
-
     def validate(self, data):
 
+        # id validation
+        if "id" in data.keys():
+            raise InvalidCustomerRequestException("Customer ID must be null while saving")
+
+        # notification_email validation
+        if not re.fullmatch(EMAIL_REGEX, data["notification_email"]):
+            raise InvalidCustomerRequestException("Notification email is not valid")
+
+        # notification_email uniqueness validation
         if Customer.objects.filter(notification_email=data['notification_email'],
                                      customer_type=data['customer_type']).exists():
-            raise InvalidCustomerRequestException("Notification email has already used with the customer type")
+            raise NotificationEmailAlreadyExistsException()
 
         else:
             return data
@@ -30,6 +29,7 @@ class CustomerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Customer
         fields = ["id", "notification_email", "customer_type"]
+        extra_kwargs = {'id': {'read_only': False, 'required': False}}
 
 
 
